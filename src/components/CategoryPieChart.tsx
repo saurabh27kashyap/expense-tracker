@@ -12,7 +12,7 @@ const CategoryPieChart: React.FC<CategoryPieChartProps> = ({
   const data = Object.entries(categoryBreakdown).map(([category, value]) => ({
     name: category,
     value: Math.abs(value), // Use absolute value for charting
-  }));
+  })).filter(item => item.value > 0);
 
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#808080"];
 

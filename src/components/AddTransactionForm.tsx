@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
   Form,
@@ -17,7 +16,13 @@ import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
@@ -43,21 +48,26 @@ const formSchema = z.object({
 
 interface AddTransactionFormProps {
   addTransaction: (transaction: any) => void;
-  transactions: any[];
-  setTransactions: React.Dispatch<React.SetStateAction<any[]>>;
 }
+
+const categories = [
+  "Food",
+  "Transport",
+  "Shopping",
+  "Entertainment",
+  "Income",
+  "Other",
+];
 
 export const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
   addTransaction,
-  transactions,
-  setTransactions,
 }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       description: "",
       amount: "",
-      category: "",
+      category: categories[0],
       date: "",
     },
   });
@@ -118,9 +128,20 @@ export const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <FormControl>
-                <Input placeholder="Category" {...field} />
-              </FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormDescription>Enter the transaction category.</FormDescription>
               <FormMessage />
             </FormItem>

@@ -1,17 +1,26 @@
-
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthlyExpensesChart } from "./MonthlyExpensesChart";
 import { CategoryPieChart } from "./CategoryPieChart";
 import { RecentTransactions } from "./RecentTransactions";
 import { AddTransactionForm } from "./AddTransactionForm";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect } from "react";
+import { BudgetComparisonChart } from "./BudgetComparisonChart";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const Dashboard = () => {
-  const [transactions, setTransactions] = React.useState([
+  const [transactions, setTransactions] = useState([
     {
       id: "1",
       date: "2024-08-01",
@@ -49,13 +58,22 @@ const Dashboard = () => {
     },
   ]);
   const [showForm, setShowForm] = useState(false);
+  const [budget, setBudget] = useState({
+    Food: 200,
+    Transport: 100,
+    Shopping: 150,
+    Entertainment: 100,
+    Other: 50,
+  });
 
   const addTransaction = (transaction: any) => {
     setTransactions([...transactions, transaction]);
   };
 
   const deleteTransaction = (id: string) => {
-    setTransactions(transactions.filter((transaction) => transaction.id !== id));
+    setTransactions(
+      transactions.filter((transaction) => transaction.id !== id)
+    );
   };
 
   const editTransaction = (id: string, updatedTransaction: any) => {
@@ -85,15 +103,32 @@ const Dashboard = () => {
     return acc;
   }, {});
 
+  const currentMonth = new Date().toLocaleString("default", { month: "long" });
+  const monthlySpending = Object.entries(categoryBreakdown).reduce(
+    (acc: any, [category, amount]) => {
+      acc[category] = amount;
+      return acc;
+    },
+    {}
+  );
+
+  const spendingInsights = () => {
+    let insight = "";
+    if (totalExpenses > Object.values(budget).reduce((a, b) => a + b, 0)) {
+      insight = "You are over budget this month.";
+    } else {
+      insight = "You are within budget this month.";
+    }
+    return insight;
+  };
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card className="col-span-1">
         <CardHeader>
           <CardTitle>Total Expenses</CardTitle>
         </CardHeader>
-        <CardContent>
-          ${totalExpenses.toFixed(2)}
-        </CardContent>
+        <CardContent>${totalExpenses.toFixed(2)}</CardContent>
       </Card>
       <Card className="col-span-1">
         <CardHeader>
@@ -103,13 +138,7 @@ const Dashboard = () => {
           <Button onClick={toggleForm}>
             {showForm ? "Close Form" : "Open Form"}
           </Button>
-          {showForm && (
-            <AddTransactionForm
-              addTransaction={addTransaction}
-              transactions={transactions}
-              setTransactions={setTransactions}
-            />
-          )}
+          {showForm && <AddTransactionForm addTransaction={addTransaction} />}
         </CardContent>
       </Card>
       <Card className="col-span-2">
@@ -140,6 +169,53 @@ const Dashboard = () => {
           />
         </CardContent>
       </Card>
+      <Card className="col-span-2">
+        <CardHeader>
+          <CardTitle>Budget Comparison ({currentMonth})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <BudgetComparisonChart budgetData={budget} actualData={monthlySpending} />
+        </CardContent>
+      </Card>
+      <Card className="col-span-2">
+        <CardHeader>
+          <CardTitle>Spending Insights</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {spendingInsights()}
+        </CardContent>
+      </Card>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline">Set Budget</Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Budget</DialogTitle>
+            <DialogDescription>
+              Set your monthly budget for each category.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {Object.keys(budget).map((category) => (
+              <div key={category} className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor={category} className="text-right">
+                  {category}
+                </label>
+                <Input
+                  type="number"
+                  id={category}
+                  defaultValue={budget[category]}
+                  className="col-span-3"
+                  onChange={(e) =>
+                    setBudget({ ...budget, [category]: Number(e.target.value) })
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
